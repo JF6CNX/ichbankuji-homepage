@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>よわ一番くじ ONLINE</title>
+    <title>よわ１番くじ ONLINE</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
@@ -53,7 +53,7 @@
         .btn-birthday-close:hover { transform: scale(1.05); }
         .confetti { position: fixed; pointer-events: none; z-index: 10001; font-size: 30px; }
 
-        /* ★追加：カスタム確認モーダル（後ろの白枠）★ */
+        /* カスタム確認モーダル */
         #custom-confirm-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); z-index: 11000;
@@ -141,15 +141,21 @@
         .modal-overlay.is-open { opacity: 1; }
         .god-rays { display: none; position: absolute; width: 250vmax; height: 250vmax; background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.1) 0deg 10deg, transparent 10deg 20deg); animation: rotateRays 30s linear infinite; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; z-index: 5; }
         .god-rays.is-active { opacity: 1; }
+        
+        /* ★幸運タイム用の金色の光スタイルを追加★ */
+        .god-rays.lucky-active { background: repeating-conic-gradient(from 0deg, rgba(255, 215, 0, 0.3) 0deg 10deg, transparent 10deg 20deg); }
+
         @keyframes rotateRays { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .explosion-flash { position: absolute; top:0; left:0; width:100%; height:100%; background:#fff; opacity:0; pointer-events:none; z-index:100; }
         .do-flash { animation: flashAnim 0.4s ease-out forwards; }
+        @keyframes flashAnim { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+
         .selection-container { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; z-index: 10; }
         .mystery-ticket {
                 width: 100px;
                 height: 160px;
                 background-color: #fff;
-                background-size: auto 100%; /* ← ここを contain から auto 100% に変更 */
+                background-size: auto 100%; 
                 background-repeat: no-repeat;
                 background-position: center;
                 border: 2px solid var(--gold);
@@ -215,7 +221,7 @@
     <header>
         <img src="title_1.png" style="width:100%;" alt="キービジュアル">
         <div class="main-title-section">
-            <h1 class="main-title">よわ一番くじ</h1>
+            <h1 class="main-title">よわ１番くじ</h1>
             <p class="sub-title">ONLINE</p>
         </div>
     </header>
@@ -226,7 +232,7 @@
             <div class="about-text">
                 <p><strong>販売期間：</strong> 2026年2月5日(木) 00:00 〜 2026年2月6日(木) 00:00</p>
                 <p><strong>価格：</strong> 1回 1よわ銀行券</p>
-                <p style="margin-top:10px; font-size:0.9rem; color:#666;">よしだけ好きは集まれ！毎年一回しか引けない伝説の一番くじ。</p>
+                <p style="margin-top:10px; font-size:0.9rem; color:#666;">よしだけ好きは集まれ！毎年一回しか引けない伝説の１番くじ。</p>
             </div>
         </section>
 
@@ -296,7 +302,6 @@
         }
         function closeBirthday() { document.getElementById('birthday-modal').style.display = 'none'; }
 
-        // --- ★独自確認モーダル用スクリプト★ ---
         function showConfirm() {
             const msgEl = document.getElementById('confirm-msg-text');
             if (drawnCount === 0) {
@@ -374,6 +379,17 @@
             if(lotteryBox.length === 0) return;
             const modal = document.getElementById('lottery-modal');
             const selectionContainer = document.getElementById('selection-container');
+            const rays = document.getElementById('god-rays');
+
+            /* --- ★幸運タイム(3:33)判定と演出を追加★ --- */
+            const now = new Date();
+            if(now.getHours() === 3 && now.getMinutes() === 33) {
+                rays.classList.add('lucky-active');
+            } else {
+                rays.classList.remove('lucky-active');
+            }
+            /* ------------------------------------------- */
+
             document.getElementById('result-container').style.display = 'none';
             document.getElementById('modal-title').style.display = 'block';
             selectionContainer.style.display = 'flex'; selectionContainer.innerHTML = '';
@@ -382,7 +398,7 @@
                 card.onclick = () => selectCard(card); selectionContainer.appendChild(card);
             }
             modal.style.display = 'flex';
-            setTimeout(() => { modal.classList.add('is-open'); const rays = document.getElementById('god-rays'); rays.style.display = 'block'; setTimeout(() => rays.classList.add('is-active'), 50); }, 10);
+            setTimeout(() => { modal.classList.add('is-open'); rays.style.display = 'block'; setTimeout(() => rays.classList.add('is-active'), 50); }, 10);
         }
 
         function selectCard(el) {
@@ -391,7 +407,24 @@
             el.classList.add('is-selected'); 
             document.getElementById('modal-title').style.display = 'none'; 
             drawnCount++;
-            const prize = lotteryBox.shift();
+
+            /* --- ★幸運タイム(3:33)の確率操作ロジックを追加★ --- */
+            const now = new Date();
+            const isLuckyTime = (now.getHours() === 3 && now.getMinutes() === 33);
+            let prize;
+
+            if (isLuckyTime) {
+                const sIndex = lotteryBox.findIndex(p => p.rank === 'S');
+                if (sIndex !== -1) {
+                    prize = lotteryBox.splice(sIndex, 1)[0];
+                } else {
+                    prize = lotteryBox.shift();
+                }
+            } else {
+                prize = lotteryBox.shift();
+            }
+            /* ----------------------------------------------- */
+
             setTimeout(() => {
                 document.getElementById('flash-overlay').classList.add('do-flash');
                 setTimeout(() => {
