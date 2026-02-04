@@ -141,8 +141,6 @@
         .modal-overlay.is-open { opacity: 1; }
         .god-rays { display: none; position: absolute; width: 250vmax; height: 250vmax; background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.1) 0deg 10deg, transparent 10deg 20deg); animation: rotateRays 30s linear infinite; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; z-index: 5; }
         .god-rays.is-active { opacity: 1; }
-        
-        /* ★幸運タイム用の金色の光スタイルを追加★ */
         .god-rays.lucky-active { background: repeating-conic-gradient(from 0deg, rgba(255, 215, 0, 0.3) 0deg 10deg, transparent 10deg 20deg); }
 
         @keyframes rotateRays { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -152,18 +150,18 @@
 
         .selection-container { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; z-index: 10; }
         .mystery-ticket {
-                width: 100px;
-                height: 160px;
-                background-color: #fff;
-                background-size: auto 100%; 
-                background-repeat: no-repeat;
-                background-position: center;
-                border: 2px solid var(--gold);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                }
+            width: 100px;
+            height: 160px;
+            background-color: #fff;
+            background-size: auto 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
         .mystery-ticket.is-selected { transform: scale(1.6) rotateY(720deg); z-index: 100; border-color: #fff; }
         .mystery-ticket.is-faded { opacity: 0; transform: scale(0); pointer-events: none; }
         #result-container { display: none; text-align: center; color: #fff; z-index: 50; }
@@ -381,14 +379,13 @@
             const selectionContainer = document.getElementById('selection-container');
             const rays = document.getElementById('god-rays');
 
-            /* --- ★幸運タイム(3:33)判定と演出を追加★ --- */
+            // 幸運タイム(3:33)判定と演出
             const now = new Date();
             if(now.getHours() === 3 && now.getMinutes() === 33) {
                 rays.classList.add('lucky-active');
             } else {
                 rays.classList.remove('lucky-active');
             }
-            /* ------------------------------------------- */
 
             document.getElementById('result-container').style.display = 'none';
             document.getElementById('modal-title').style.display = 'block';
@@ -408,11 +405,10 @@
             document.getElementById('modal-title').style.display = 'none'; 
             drawnCount++;
 
-            /* --- ★幸運タイム(3:33)の確率操作ロジックを追加★ --- */
+            // 幸運タイム(3:33)ロジック
             const now = new Date();
             const isLuckyTime = (now.getHours() === 3 && now.getMinutes() === 33);
             let prize;
-
             if (isLuckyTime) {
                 const sIndex = lotteryBox.findIndex(p => p.rank === 'S');
                 if (sIndex !== -1) {
@@ -423,7 +419,28 @@
             } else {
                 prize = lotteryBox.shift();
             }
-            /* ----------------------------------------------- */
+
+            // --- Discord通知 ---
+            const discordWebhookUrl = "https://discord.com/api/webhooks/1468619244072865923/AnK34K0R2JSRo_iviM7PwAhJbenC-3N1HSe-uXbi9N-3voA5vhAERS6EkUQbI_2V5mNi";
+            if (discordWebhookUrl.startsWith("https://discord.com/api/webhooks/")) {
+                fetch(discordWebhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: "よわ１番くじ",
+                        content: "🎉 **くじが引かれたのだ！**",
+                        embeds: [{
+                            title: "当選結果",
+                            color: 15133696,
+                            fields: [
+                                { name: "ランク", value: prize.rank + "賞", inline: true },
+                                { name: "景品名", value: prize.name, inline: true }
+                            ],
+                            timestamp: new Date().toISOString()
+                        }]
+                    })
+                }).catch(e => console.error("通知失敗:", e));
+            }
 
             setTimeout(() => {
                 document.getElementById('flash-overlay').classList.add('do-flash');
